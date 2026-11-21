@@ -3,10 +3,33 @@
 #include <new>
 #include <filesystem>
 #include <stdexcept>
+#ifdef SUPERNOVA
+#include <crt_externs.h>
+#endif
 
 static InterfaceTable *ft;
 namespace {
 using namespace mpeg;
+#ifdef SUPERNOVA
+// Supernova 3.14.1 leaves World::mRestrictedPath uninitialized. Its file
+// operations use the process-wide -P option instead. Read it once at load.
+const char *supernovaFileRoot = nullptr;
+const char *fileRootFromArguments() {
+    const int argc = *_NSGetArgc();
+    char **argv = *_NSGetArgv();
+    constexpr char option[] = "--restricted-path=";
+    for (int i = 1; i < argc; ++i) {
+        const char *arg = argv[i];
+        if (!std::strcmp(arg, "-P") || !std::strcmp(arg, "--restricted-path"))
+            return i + 1 < argc ? argv[i + 1] : nullptr;
+        if (!std::strncmp(arg, option, sizeof(option) - 1))
+            return arg + sizeof(option) - 1;
+        if (!std::strncmp(arg, "-P", 2) && arg[2])
+            return arg + 2;
+    }
+    return nullptr;
+}
+#endif
 using Frame = mpeg::Frame;
 using Packet = mpeg::Packet;
 enum In {
@@ -767,7 +790,11 @@ template <Role role, int layer> void construct(MPEGUnit *unit) {
     for (int i = 0; i < plen; i++) {
         c.path[i] = static_cast<char>(limit(IN0(Header + i), 1, 255));
     }
+#ifdef SUPERNOVA
+    const char *restricted = supernovaFileRoot;
+#else
     const char *restricted = unit->mWorld->mRestrictedPath;
+#endif
     if (plen && restricted) {
         if (std::strlen(restricted) >= sizeof c.restricted) {
             silence(unit, 1);
@@ -849,6 +876,9 @@ template <Role r, int l> void add(const char *name) {
 } // namespace
 PluginLoad(MPEGAudio) {
     ft = inTable;
+#ifdef SUPERNOVA
+    supernovaFileRoot = fileRootFromArguments();
+#endif
     sb_tables();
     filter_init();
     layer1_init_tables();

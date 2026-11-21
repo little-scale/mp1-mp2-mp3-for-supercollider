@@ -530,7 +530,7 @@ def unpack_message(packet):
     return address, values
 
 
-def live(work, engine, arch=None):
+def live(work, engine, arch=None, restrict_files=False):
     # Use a dedicated server and silent graphs. Never connect to the user's running server.
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
         probe.bind(("127.0.0.1", 0))
@@ -545,6 +545,8 @@ def live(work, engine, arch=None):
         "-Z",
         "256",
     ]
+    if restrict_files:
+        argv.extend(["-P", str(work)])
     if engine == "supernova":
         argv.extend(["-T", "2"])
     if arch:
@@ -565,7 +567,9 @@ def live(work, engine, arch=None):
 
         def receive():
             if process.poll() is not None:
-                raise RuntimeError(log_path.read_text())
+                raise RuntimeError(
+                    f"{engine} exited with {process.returncode}\n{log_path.read_text()}"
+                )
             try:
                 addr, values = unpack_message(client.recv(8192))
             except TimeoutError:
@@ -711,6 +715,11 @@ def main():
         "--live", action="store_true", help="also boot both local audio servers"
     )
     parser.add_argument("--live-only", action="store_true")
+    parser.add_argument(
+        "--restrict-files",
+        action="store_true",
+        help="exercise live file objects with the server restricted to the test directory",
+    )
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as t:
         work = (args.work or Path(t)).resolve()
@@ -727,7 +736,7 @@ def main():
             external_files(work, args.arch)
         if args.live or args.live_only:
             for server in ["scsynth", "supernova"]:
-                live(work, server, args.arch)
+                live(work, server, args.arch, args.restrict_files)
         print("SuperCollider MPEG checks passed", flush=True)
 
 
