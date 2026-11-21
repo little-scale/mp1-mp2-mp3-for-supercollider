@@ -1,0 +1,36 @@
+CLASS:: MP1Frames
+SUMMARY:: Read a different frame age for every band
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Pack, Classes/MPEGFrame
+
+DESCRIPTION::
+Recall complete frames on the stream clock. Scalar ages affect the whole bank. Independent ages combine bands captured at different times.
+
+CLASSMETHODS::
+METHOD:: ar
+The record gate and ages latch at frame start.
+
+ARGUMENT:: fields
+An MPEGFrame for the same layer. Encoders, readers and the MPEGFrame constructors all supply this type.
+
+ARGUMENT:: age
+One age per band, measured in complete frames. Zero selects live input, one the most recent stored frame. Older ages clamp to available history.
+
+ARGUMENT:: capacity
+Fixed history length in complete frames, from 1 to 1024. The default is 64.
+
+ARGUMENT:: record
+Set to 0 to stop overwriting history. Live input and recall keep running.
+
+ARGUMENT:: clear
+A rising edge discards history at the next frame boundary.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+RETURNS:: An MPEGFrame containing the recalled fields and the live timing marker.
+
+EXAMPLES::
+code::
+{ var f = MPEGFrame.mp1(SinOsc.ar([2,3,5])*12); var m = MP1Frames.ar(f,(0..31)%4,8); Limiter.ar(MP1Decode.ar(m),0.15) ! 2 }.play;
+::

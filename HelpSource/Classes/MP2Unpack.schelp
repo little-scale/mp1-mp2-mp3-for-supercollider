@@ -1,0 +1,25 @@
+CLASS:: MP2Unpack
+SUMMARY:: Read a compressed file directly into band signals
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP2Pack, Classes/MPEGFrame
+
+DESCRIPTION::
+Read indexed MPEG audio frames at the file’s clock. The transport exposes words and coding fields without a PCM round trip.
+
+CLASSMETHODS::
+METHOD:: ar
+Set run to 0 and then 1 to replay from the beginning.
+
+ARGUMENT:: path
+Full path on the server, supplied as a String when building the SynthDef.
+
+ARGUMENT:: channels
+One or two output channels. Supply an integer when compiling the SynthDef.
+
+ARGUMENT:: run
+A rising edge starts a take or starts reading at the beginning. A falling edge finishes the take or stops reading.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+RETURNS:: An MPEGFrame with fields, marker, format, bytes and status. Read running to gate a writer through EOF.

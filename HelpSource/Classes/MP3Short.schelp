@@ -1,0 +1,28 @@
+CLASS:: MP3Short
+SUMMARY:: Trim the three short windows independently
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP3Clock, Classes/MP3Pack
+
+DESCRIPTION::
+Apply dB trims to MP3 short windows. Long-window bands pass through.
+
+CLASSMETHODS::
+METHOD:: ar
+Use the resulting bank as the frame’s attenuation field.
+
+ARGUMENT:: attenuation
+Effective MP3 attenuation, one scalar or one signal per hybrid band.
+
+ARGUMENT:: window
+Window code per channel. Codes 2, 4 and 5 select short or mixed windows.
+
+ARGUMENT:: row
+Current spectral row from 0 through 17, usually the first output of MP3Clock.
+
+ARGUMENT:: trims
+Three dB values, one per short window. Six values allow separate stereo trims. Negative values attenuate.
+
+ARGUMENT:: channels
+One or two output channels. Supply an integer when compiling the SynthDef.
+
+RETURNS:: 32 or 64 audio-rate attenuation signals.

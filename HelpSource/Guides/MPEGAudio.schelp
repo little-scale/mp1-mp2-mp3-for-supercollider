@@ -1,0 +1,59 @@
+TITLE:: MPEG Audio
+SUMMARY:: Compose with the subbands, coefficients and bytes of MP1, MP2 and MP3
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Classes/MPEGFrame, Classes/MP1Bands, Classes/MP3Short, Classes/MP3Pack, Classes/MP3Unpack
+
+The extension supplies a SuperCollider instrument, editor and file transport for each MPEG audio layer. Evaluate code::s.options.numWireBufs = 1024:: before booting. A frame can carry up to 64 word signals plus its other fields, timing and format.
+
+SECTION:: Make sound from fields
+
+code::
+(
+~tone = { |hold=0|
+    var words = SinOsc.ar([1.7,2.9,4.1,7.3]) * [14,10,7,3];
+    var f = MPEGFrame.mp3(words, gain:171);
+    var audio = MP3Decode.ar(f, holds:[0,hold] ++ (0!30), holdMode:\level);
+    Limiter.ar(LeakDC.ar(audio),0.2) ! 2
+}.play;
+)
+~tone.set(\hold,1);
+~tone.free;
+::
+
+A single value controls every lane. A stereo frame uses left lanes 0 through 31, then right lanes 32 through 63. A 32-lane input on a stereo frame drives both banks. Short arrays fill unused lanes with that field's default. Use link::Classes/MPEGFrame:: to create a field bank, or get one from an encoder or reader.
+
+SECTION:: Edit a file in the compressed domain
+
+code::
+(
+// Assign two distinct, full paths before evaluating this definition.
+~source = "/path/to/source.mp3";
+~destination = "/path/to/edited.mp3";
+SynthDef(\mpegEdit, { |run=0, hold=0|
+    var f = MP3Unpack.ar(~source,2,run);
+    var mask = [hold] ++ (0!31);
+    var p = MP3Pack.ar(f.withWords(f.words.neg),~destination,
+        run:f.running,holds:mask,holdMode:\level);
+    A2K.kr(p.state).poll(Changed.kr(A2K.kr(p.state)),"writer");
+}).add;
+)
+~edit = Synth(\mpegEdit, [\run,1]);
+~edit.set(\hold,1);
+~edit.free;
+::
+
+The writer starts when the reader has data and finishes the take at end of file. Layer I and II expose quantized words, allocation and scalefactors. MP3 exposes quantized hybrid coefficients, effective attenuation, global gain and window type. Joint-stereo MP3 files are transformed into editable left and right spectra. The native reader's byte output retains the original audio-frame bytes. Files written from edited fields can differ through fitting or requantization.
+
+SECTION:: Rates, frames and settings
+
+list::
+## All server objects use audio rate. Any data lane or live setting accepts a number, control-rate UGen or audio-rate UGen. Channel count, file path and memory capacity are fixed in the SynthDef.
+## Layer I has 12 rows per frame. Layer II has 36, grouped as three sets of 12. MP3 has 18 rows per granule and one or two granules per frame. A frame marker carries 1 at the first row, increasing at each new row. Between rows it is 0. An idle stream sends −1. A generated frame defaults to −2 for the internal clock.
+## The minimum bitrate is 32 kb/s for Layer I. Layers II and III can reach 8 kb/s at lower codec clocks. The encoder and packer select the nearest legal rate at the next frame boundary. In a field decoder, bitrate 0 synthesizes the given fields directly. A positive bitrate fits and auditions them.
+## Divisors 1 through 6 select a legal sample rate in the original family. On a 96 kHz server, MP3 can use a base clock of 48 kHz and divide to 24, 16, 12 or 8 kHz. A shared divisor is applied once along a connected field path. A reader takes its rate setting when playback starts. A change in the effective rate or channel count finishes the current take.
+## A full freeze repeats the last complete frame. A band gate of 1 holds its band and 0 follows input. Field hold mode is code::\coeff:: for the stored words or code::\level:: to also preserve level. In MP3 byte mode the spectral magnitude includes level.
+## Eight byte signals carry consecutive values 0 through 255 in lane order. Unused lanes contain −1. Route these to a matching decoder's code::bytes:: method. Use its PCM return value for listening.
+## File and codec workers run outside the sound callback on live servers. Decoding and monitoring incur frame latency. The offline server processes jobs synchronously. Frame memory stores complete frames, and larger capacity increases per-synth memory.
+::
+
+Source and packer status signals are code::state::, code::frames:: and code::drops::. State is 0 when idle, 1 while active, 2 after completion and −1 for an error. The frame counter counts generated, decoded, read or recorded frames according to the object. The drop counter reports a full transport queue. Details of file errors appear in the server log.

@@ -1,0 +1,75 @@
+CLASS:: MP1Decode
+SUMMARY:: Synthesize editable fields or packed bytes
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Encode, Classes/MPEGDecodeOutput
+
+DESCRIPTION::
+A field decoder can audition a target bitrate. A byte decoder follows the incoming stream. Both inputs support holds.
+
+CLASSMETHODS::
+METHOD:: ar
+Synthesize a field stream. Bitrate 0 reads the supplied fields directly.
+
+ARGUMENT:: fields
+An MPEGFrame for the same layer. Encoders, readers and the MPEGFrame constructors all supply this type.
+
+ARGUMENT:: bitrate
+Requested kb/s. A control or audio-rate signal can change it at a frame boundary. The object selects the nearest legal rate.
+
+ARGUMENT:: freeze
+A gate of 1 holds the last frame, including its level. Set to 0 to follow live data.
+
+ARGUMENT:: holds
+Per-band gates. A single value broadcasts, 32 values address a bank, and 64 values address left and right independently.
+
+ARGUMENT:: holdMode
+Use a symbol, code::\coeff:: or code::\level::, or a signal carrying 0 or 1. Level mode preserves the held band level.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+ARGUMENT:: normalized
+Set to 1 for bipolar words in the range −1 to 1. The default expects signed codec integers.
+
+RETURNS:: Mono PCM or a stereo pair.
+
+METHOD:: arInfo
+Same arguments as ar. Also expose state, processed frame count and drops.
+
+RETURNS:: An MPEGDecodeOutput.
+
+METHOD:: bytes
+Parse and play compressed audio frames at their header rate.
+
+ARGUMENT:: bytes
+An array of 1 to 64 byte signals, usually the eight lanes from a source’s code::bytes:: member. Each lane carries 0–255 or −1 for idle.
+
+ARGUMENT:: channels
+One or two output channels. Supply an integer when compiling the SynthDef.
+
+ARGUMENT:: freeze
+A gate of 1 holds the last frame, including its level. Set to 0 to follow live data.
+
+ARGUMENT:: holds
+Per-band gates. A single value broadcasts, 32 values address a bank, and 64 values address left and right independently.
+
+ARGUMENT:: holdMode
+Use a symbol, code::\coeff:: or code::\level::, or a signal carrying 0 or 1. Level mode preserves the held band level.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+RETURNS:: Mono PCM or a stereo pair.
+
+METHOD:: bytesInfo
+Same arguments as bytes. Return PCM and status together.
+
+RETURNS:: An MPEGDecodeOutput.
+
+METHOD:: serial
+Scan one Layer I word per host sample. See link::Classes/MP1Serial::.
+
+EXAMPLES::
+code::
+{ var f = MPEGFrame.mp1(SinOsc.ar([2,3,5])*12); Limiter.ar(MP1Decode.ar(f),0.15) ! 2 }.play;
+::

@@ -1,0 +1,14 @@
+CLASS:: MPEGDecodeOutput
+SUMMARY:: PCM and decoder status signals
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP3Decode, Classes/MPEGFrame
+
+DESCRIPTION::
+Returned by any decoder’s arInfo or bytesInfo method.
+
+INSTANCEMETHODS::
+METHOD:: audio
+One audio signal or a stereo array.
+
+METHOD:: state, frames, drops
+Audio-rate state, processed frame count and transport drops. State is 0 during startup, 1 when decoding or −1 after an error.

@@ -1,0 +1,28 @@
+CLASS:: MP1Bands
+SUMMARY:: Play the original Layer I subband instrument
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Decode, Classes/MP1Clock
+
+DESCRIPTION::
+This instrument uses a 32-sample scan and 12 scans per frame at the server sample rate.
+
+CLASSMETHODS::
+METHOD:: ar
+Drive the Layer I synthesis bank directly.
+
+ARGUMENT:: words
+A bank of word signals. A single input broadcasts across all 32 addresses.
+
+ARGUMENT:: address
+A negative address follows the scan. In parallel mode a scalar rotates the bank and an array maps lanes to destination bands.
+
+ARGUMENT:: allocation
+Layer I allocation indices 0–14. Zero silences a subband.
+
+ARGUMENT:: scale
+Layer I scalefactor indices 0–62. Increasing the index by 3 halves amplitude.
+
+ARGUMENT:: raw
+Use 0 for bipolar normalized words or 1 for unsigned quantizer codes in the legacy instrument.
+
+RETURNS:: An array of PCM, scan position and frame-start pulse.

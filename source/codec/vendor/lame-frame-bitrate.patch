@@ -1,0 +1,66 @@
+--- a/libmp3lame/lame.c
++++ b/libmp3lame/lame.c
+@@ -271,6 +271,37 @@
+     (void) upperlimit;
+ }
+ 
++
++/* MP3 Patch: call between encode calls on a reservoir-disabled CBR stream.
++ * Keep the transform overlap, psychoacoustic history, and bitstream timing. */
++int CDECL
++lame_set_frame_bitrate(lame_global_flags *gfp, int kbps)
++{
++    lame_internal_flags *gfc;
++    SessionConfig_t *cfg;
++    double cutoff, highpass;
++    int index;
++    if (!is_lame_global_flags_valid(gfp)) return -1;
++    gfc = gfp->internal_flags;
++    if (!is_lame_internal_flags_valid(gfc)) return -1;
++    cfg = &gfc->cfg;
++    if (cfg->vbr != vbr_off || !cfg->disable_reservoir || cfg->free_format) return -1;
++    index = BitrateIndex(kbps, cfg->version, cfg->samplerate_out);
++    if (index < 1 || (cfg->samplerate_out < 16000 && index > 8)) return -1;
++    if (cfg->avg_bitrate == kbps) return 0;
++    gfp->brate = cfg->avg_bitrate = kbps;
++    gfc->ov_enc.bitrate_index = index;
++    gfc->sv_enc.frac_SpF = ((cfg->version + 1) * 72000L * kbps) % cfg->samplerate_out;
++    gfp->compression_ratio = cfg->compression_ratio =
++        cfg->samplerate_out * 16.0 * cfg->channels_out / (1000.0 * kbps);
++    optimum_bandwidth(&cutoff, &highpass, kbps);
++    if (cfg->mode == MONO) cutoff *= 1.5;
++    gfp->lowpassfreq = cfg->lowpassfreq = Min(cfg->samplerate_out / 2, Min(20500, (int)cutoff));
++    cfg->lowpass1 = cfg->lowpass2 = cfg->lowpassfreq < cfg->samplerate_out / 2
++        ? 2.0 * cfg->lowpassfreq / cfg->samplerate_out : 0.0;
++    lame_init_params_ppflt(gfc);
++    return 0;
++}
+ 
+ static int
+ optimum_samplefreq(int lowpassfreq, int input_samplefreq)
+--- a/include/lame.h
++++ b/include/lame.h
+@@ -351,6 +351,7 @@
+ 
+ /* set one of brate compression ratio.  default is compression ratio of 11.  */
+ int CDECL lame_set_brate(lame_global_flags *, int);
++int CDECL lame_set_frame_bitrate(lame_global_flags *, int);
+ int CDECL lame_get_brate(const lame_global_flags *);
+ int CDECL lame_set_compression_ratio(lame_global_flags *, float);
+ float CDECL lame_get_compression_ratio(const lame_global_flags *);
+--- a/include/libmp3lame.sym
++++ b/include/libmp3lame.sym
+@@ -1,5 +1,4 @@
+ lame_init
+-lame_init_old
+ lame_set_num_samples
+ lame_get_num_samples
+ lame_set_in_samplerate
+@@ -50,6 +49,7 @@
+ lame_set_debugf
+ lame_set_msgf
+ lame_set_brate
++lame_set_frame_bitrate
+ lame_get_brate
+ lame_set_compression_ratio
+ lame_get_compression_ratio

@@ -1,0 +1,48 @@
+CLASS:: MP1Pack
+SUMMARY:: Write compressed fields as a valid MPEG stream
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Unpack, Classes/MP1Decode
+
+DESCRIPTION::
+Fit each edited frame into a legal bit budget. A file path is optional. Live byte and field outputs are available with the recorder stopped.
+
+CLASSMETHODS::
+METHOD:: ar
+A finished take is moved into place when run falls. A change of effective rate or channel count finishes an open take.
+
+ARGUMENT:: fields
+An MPEGFrame for the same layer. Encoders, readers and the MPEGFrame constructors all supply this type.
+
+ARGUMENT:: path
+Full path on the server, supplied as a String when building the SynthDef.
+
+ARGUMENT:: run
+A rising edge starts a take or starts reading at the beginning. A falling edge finishes the take or stops reading.
+
+ARGUMENT:: bitrate
+Requested kb/s. A control or audio-rate signal can change it at a frame boundary. The object selects the nearest legal rate.
+
+ARGUMENT:: freeze
+A gate of 1 holds the last frame, including its level. Set to 0 to follow live data.
+
+ARGUMENT:: holds
+Per-band gates. A single value broadcasts, 32 values address a bank, and 64 values address left and right independently.
+
+ARGUMENT:: holdMode
+Use a symbol, code::\coeff:: or code::\level::, or a signal carrying 0 or 1. Level mode preserves the held band level.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+ARGUMENT:: normalized
+Set to 1 for bipolar words in the range −1 to 1. The default expects signed codec integers.
+
+ARGUMENT:: monitor
+Set to 1 to synthesize the samples represented by the packed bytes. Read them from the returned frame’s code::audio:: member.
+
+RETURNS:: An MPEGFrame with the edited fields before fitting, packed byte lanes, optional audio monitor and status.
+
+EXAMPLES::
+code::
+{ var f = MPEGFrame.mp1(SinOsc.ar([2,3,5])*12); var p = MP1Pack.ar(f, bitrate:96, monitor:1); Limiter.ar(p.audio,0.15) ! 2 }.play;
+::

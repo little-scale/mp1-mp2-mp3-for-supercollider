@@ -1,0 +1,4 @@
+/plugins/*.scx
+/plugins/*.dylib
+.DS_Store
+__pycache__/

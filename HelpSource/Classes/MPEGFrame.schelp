@@ -1,0 +1,36 @@
+CLASS:: MPEGFrame
+SUMMARY:: A patchable bank of MPEG field and timing signals
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Pack, Classes/MP2Pack, Classes/MP3Pack
+
+DESCRIPTION::
+A language-side collection of ordinary signals. The layer and channel count describe its field layout. The MP1 and MP2 banks contain words, allocation and scale. MP3 has words, attenuation, gain and window. All banks also carry a marker and seven format signals.
+
+CLASSMETHODS::
+METHOD:: mp1, mp2
+Create a field bank from words, allocation, scale, channel count, marker and optional format. Allocation ranges from 0 to 14 for Layer I and 0 to 17 for Layer II. Scale ranges from 0 to 62. Words are signed and limited to the active quantizer.
+
+METHOD:: mp3
+Create a bank from signed words (−8206 to 8206), effective attenuation (0 to 210), global gain (0 to 255), window (0 to 5), channel count, marker and optional format. Code 0 selects a long window, 1 start, 2 short, 3 stop and 4 or 5 mixed. Every band holds 18 consecutive lines per granule.
+
+INSTANCEMETHODS::
+METHOD:: withWords
+Return a copy with the supplied word bank. The source frame’s other coding fields and timing carry through. Send the result to a packer to obtain byte signals for the edit.
+
+METHOD:: format
+Seven signals in order: current codec Hz, bitrate in kb/s, encoded channels, MPEG channel mode, joint-stereo bound, padding flag and original codec Hz. A generated frame can use defaults.
+
+METHOD:: frameStart, codecRate, bitrate
+Audio-rate accessors for a streaming frame’s first-row pulse, sample rate and bitrate.
+
+METHOD:: state, frames, drops, running, done
+Streaming encoders, readers and packers provide worker status. A reader’s running signal can gate a packer. Done rises at completion. Errors produce state −1.
+
+METHOD:: words, allocation, scale, attenuation, gain, window, marker
+Get or assign the corresponding bank. Words and band-level fields use 32 lanes per channel. Gain and window are per channel.
+
+METHOD:: layer, channels
+Language integers describing the graph layout.
+
+METHOD:: bytes, audio
+Encoders, readers and packers supply eight byte lanes. A packer supplies a PCM monitor when enabled.

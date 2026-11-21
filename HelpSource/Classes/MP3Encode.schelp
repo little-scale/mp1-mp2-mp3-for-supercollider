@@ -1,0 +1,27 @@
+CLASS:: MP3Encode
+SUMMARY:: Encode PCM to fields and bytes
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP3Pack, Classes/MP3Decode
+
+DESCRIPTION::
+Analyze mono or stereo PCM into 32 bands per channel. The native codec clock follows the server rate family.
+
+CLASSMETHODS::
+METHOD:: ar
+Start a streaming encoder. An unspecified bitrate selects the layer default.
+
+ARGUMENT:: in
+PCM signal, or a two-element array for stereo.
+
+ARGUMENT:: bitrate
+Requested kb/s. A control or audio-rate signal can change it at a frame boundary. The object selects the nearest legal rate.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+RETURNS:: An MPEGFrame with editable fields, marker, format, byte lanes and status.
+
+EXAMPLES::
+code::
+{ var f = MP3Encode.ar(SinOsc.ar(431)*0.08); MP3Decode.ar(f) ! 2 }.play;
+::

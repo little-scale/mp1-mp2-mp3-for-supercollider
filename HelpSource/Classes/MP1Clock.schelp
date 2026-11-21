@@ -1,0 +1,19 @@
+CLASS:: MP1Clock
+SUMMARY:: Generate or follow codec timing
+CATEGORIES:: UGens>MPEG Audio
+RELATED:: Guides/MPEGAudio, Classes/MP1Frames, Classes/MPEGFrame
+
+DESCRIPTION::
+Drive a patch from native codec timing or follow a stream sample by sample.
+
+CLASSMETHODS::
+METHOD:: ar
+Use the first output as the zero-based frame row or MP3 granule row.
+
+ARGUMENT:: marker
+An MPEGFrame, its marker signal, or −2 to use the internal clock.
+
+ARGUMENT:: downsample
+Native clock divisor from 1 to 6. A reader samples this at start. Connected field streams preserve the original codec clock.
+
+RETURNS:: Four audio signals in order: row, full-frame pulse, group or granule pulse, and numbered row marker.
